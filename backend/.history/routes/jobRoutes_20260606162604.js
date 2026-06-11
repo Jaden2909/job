@@ -10,6 +10,6 @@ router.route('/:id')
   .put(updateJob)
   .delete(deleteJob);
 
-router.put('/:id/status', protect, updateApplicantStatus);
+  router.put('/:id/status', protect, updateApplicantStatus);
 
 module.exports = router;

@@ -1,42 +1,69 @@
 ﻿import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
 export default function Layout({ children }) {
   const router = useRouter();
+  const [user, setUser] = useState(null);
 
-  const navItemStyle = (path) => ({
-    color: router.pathname === path ? '#0070f3' : '#555',
-    textDecoration: 'none',
-    fontSize: '15px',
-    fontWeight: router.pathname === path ? '600' : '500',
-    padding: '6px 12px',
-    borderRadius: '4px',
-    background: router.pathname === path ? '#e6f0fa' : 'transparent',
-    transition: 'all 0.2s ease'
-  });
+  useEffect(() => {
+    const handleAuthCheck = () => {
+      const token = localStorage.getItem('token');
+      const name = localStorage.getItem('userName');
+      const role = localStorage.getItem('userRole');
+      if (token && name) {
+        setUser({ name, role });
+      } else {
+        setUser(null);
+      }
+    };
+
+    // Perform initial check on mount
+    handleAuthCheck();
+
+    // Listen to local and cross-component authentication shifts seamlessly
+    window.addEventListener('storage', handleAuthCheck);
+    router.events.on('routeChangeComplete', handleAuthCheck);
+    
+    return () => {
+      window.removeEventListener('storage', handleAuthCheck);
+      router.events.off('routeChangeComplete', handleAuthCheck);
+    };
+  }, [router.events]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setUser(null);
+    // Alert all other observers that state was cleared
+    window.dispatchEvent(new Event('storage'));
+    router.push('/');
+  };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f8f9fa' }}>
-      {/* Universal Navigation Banner */}
-      <nav style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e1e4e8', padding: '12px 24px', sticky: 'top', zIndex: 1000 }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <nav style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e1e4e8', padding: '12px 24px', position: 'sticky', top: 0, zIndex: 1000 }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
-          {/* Logo Brand Link */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '20px', fontWeight: '800', color: '#0070f3', letterSpacing: '-0.5px' }}>🚀 JobBoard</span>
           </Link>
 
-          {/* Navigation Route Menu */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/" style={navItemStyle('/')}>Browse Jobs</Link>
-            <Link href="/create" style={navItemStyle('/create')}>Post a Job</Link>
-            <Link href="/login" style={{ ...navItemStyle('/login'), border: '1px solid #ccc', marginLeft: '8px' }}>Sign In</Link>
-          </div>
-
+          {user && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{ fontSize: '14px', color: '#444' }}>
+                💼 <strong>{user.name}</strong> ({user.role})
+              </span>
+              <button 
+                onClick={handleLogout}
+                style={{ background: '#fff', border: '1px solid #dc3545', color: '#dc3545', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Main Dynamic Viewport Content */}
       <main style={{ flex: 1 }}>
         {children}
       </main>
