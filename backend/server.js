@@ -23,11 +23,8 @@ mongoose.connect(MONGO_URI)
 const frontendBuildPath = path.join(__dirname, '../frontend/out');
 app.use(express.static(frontendBuildPath));
 
-// Bypass path-to-regexp completely using a direct middleware check
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    return next();
-  }
+// Direct JavaScript Regular Expression literal bypasses string parsing entirely
+app.get(/^((?!\/api).)*$/, (req, res) => {
   res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
 
