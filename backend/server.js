@@ -23,7 +23,7 @@ mongoose.connect(MONGO_URI)
 const frontendBuildPath = path.join(__dirname, '../frontend/out');
 app.use(express.static(frontendBuildPath));
 
-app.get('/:catchall*', (req, res) => {
+app.get('/:slug*', (req, res) => {
   res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
 
